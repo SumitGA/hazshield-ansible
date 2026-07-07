@@ -1,0 +1,21 @@
+---
+- name: Install Redis
+  apt:
+    name: redis-server
+    state: present
+    update_cache: true
+
+- name: Deploy redis config
+  template:
+    src: redis-hazshield.conf.j2
+    dest: /etc/redis/redis.conf
+    owner: redis
+    group: redis
+    mode: "0640"
+  notify: restart redis
+
+- name: Ensure redis started
+  service:
+    name: redis-server
+    state: started
+    enabled: true

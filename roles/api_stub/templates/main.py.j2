@@ -1,0 +1,20 @@
+"""HazShield orchestration API — Phase 1 stub.
+
+Exists to prove the full ingress chain (Cloudflare edge -> tunnel ->
+Caddy -> uvicorn) before real logic lands in Phase 3.
+"""
+from datetime import datetime, timezone
+
+from fastapi import FastAPI
+
+app = FastAPI(title="HazShield API", version="0.1.0-stub")
+
+
+@app.get("/health")
+def health() -> dict:
+    return {
+        "status": "ok",
+        "service": "hazshield-api",
+        "phase": "1-stub",
+        "time": datetime.now(timezone.utc).isoformat(),
+    }

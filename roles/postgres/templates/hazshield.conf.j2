@@ -1,0 +1,22 @@
+# HazShield tuning — 6GB VM shared with Redis. Managed by Ansible.
+listen_addresses = 'localhost,{{ state_ip }}'
+max_connections = {{ pg_max_connections }}
+
+shared_preload_libraries = 'timescaledb'
+timescaledb.max_background_workers = 4
+
+shared_buffers = {{ pg_shared_buffers }}
+effective_cache_size = {{ pg_effective_cache_size }}
+work_mem = {{ pg_work_mem }}
+maintenance_work_mem = {{ pg_maintenance_work_mem }}
+
+# Write path: ingest is batched COPY; favor throughput, bound WAL bloat
+max_wal_size = {{ pg_max_wal_size }}
+wal_compression = on
+synchronous_commit = off   # acceptable to lose <1s of BULK telemetry on a
+                           # crash; safety-critical writes override per-txn.
+
+random_page_cost = 1.1     # SSD
+effective_io_concurrency = 200
+
+log_min_duration_statement = 500ms

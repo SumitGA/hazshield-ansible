@@ -1,0 +1,102 @@
+---
+- name: Install prerequisites
+  apt:
+    name: [curl, gnupg, ca-certificates, python3-psycopg2, acl]
+    state: present
+    update_cache: true
+
+- name: Ensure keyrings dir
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add PGDG signing key
+  get_url:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    dest: /etc/apt/keyrings/pgdg.asc
+    mode: "0644"
+
+- name: Add PGDG repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/pgdg.asc] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    state: present
+
+- name: Add TimescaleDB signing key
+  get_url:
+    url: https://packagecloud.io/timescale/timescaledb/gpgkey
+    dest: /etc/apt/keyrings/timescaledb.asc
+    mode: "0644"
+
+- name: Add TimescaleDB repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/timescaledb.asc] https://packagecloud.io/timescale/timescaledb/ubuntu {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Install PostgreSQL + TimescaleDB
+  apt:
+    name:
+      - "postgresql-{{ pg_version }}"
+      - "timescaledb-2-postgresql-{{ pg_version }}"
+    state: present
+    update_cache: true
+
+- name: Deploy tuning config (conf.d overrides, never edit postgresql.conf)
+  template:
+    src: hazshield.conf.j2
+    dest: "/etc/postgresql/{{ pg_version }}/main/conf.d/hazshield.conf"
+    owner: postgres
+    group: postgres
+    mode: "0644"
+  notify: restart postgres
+
+- name: Deploy pg_hba (scram auth from edge + compute only)
+  template:
+    src: pg_hba.conf.j2
+    dest: "/etc/postgresql/{{ pg_version }}/main/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgres
+
+- name: Ensure postgres started
+  service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- meta: flush_handlers
+
+- name: Create hazshield role
+  become_user: postgres
+  postgresql_user:
+    name: hazshield
+    password: "{{ pg_password }}"
+
+- name: Create hazshield database
+  become_user: postgres
+  postgresql_db:
+    name: hazshield
+    owner: hazshield
+
+- name: Enable timescaledb extension
+  become_user: postgres
+  postgresql_ext:
+    name: timescaledb
+    db: hazshield
+
+- name: Copy migrations
+  copy:
+    src: "{{ playbook_dir }}/migrations/"
+    dest: /opt/hazshield/migrations/
+    mode: "0644"
+
+- name: Apply migrations in order (idempotent via IF NOT EXISTS)
+  become_user: postgres
+  command: psql -v ON_ERROR_STOP=1 -d hazshield -f "/opt/hazshield/migrations/{{ item }}"
+  loop:
+    - 0001_asset_hierarchy.sql
+    - 0002_timeseries.sql
+    - 0003_alarms_plans.sql
+  register: mig
+  changed_when: "'CREATE' in mig.stdout or 'ALTER' in mig.stdout"

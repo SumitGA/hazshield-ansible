@@ -1,0 +1,6 @@
+# Managed by Ansible — least-privilege access matching the secgroup design.
+local   all   postgres                        peer
+local   all   all                             peer
+host    hazshield  hazshield  127.0.0.1/32         scram-sha-256
+host    hazshield  hazshield  {{ edge_ip }}/32     scram-sha-256
+host    hazshield  hazshield  {{ compute_ip }}/32  scram-sha-256
