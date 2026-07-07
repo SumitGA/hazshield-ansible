@@ -40,3 +40,8 @@
     state: started
     enabled: true
     daemon_reload: true
+
+- name: Install state-node client tools for diagnostics
+  apt:
+    name: [redis-tools, postgresql-client]
+    state: present

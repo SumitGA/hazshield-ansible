@@ -4,20 +4,21 @@ port 6379
 protected-mode yes
 requirepass {{ redis_password }}
 
+# --- Debian/Ubuntu integration (required for the stock systemd unit) ---
+supervised systemd
+dir /var/lib/redis
+pidfile /run/redis/redis-server.pid
+logfile /var/log/redis/redis-server.log
+
 # The hot lane must NEVER silently evict a violation. If we hit the cap,
 # writes fail loudly and the Rust edge spills to its local AOF fallback.
 maxmemory {{ redis_maxmemory }}
 maxmemory-policy noeviction
 
-# Durability for streams: AOF with per-second fsync. Snapshotting (RDB)
-# disabled — the working set is small and AOF covers restart recovery.
+# Durability for streams: AOF with per-second fsync. RDB snapshotting off.
 appendonly yes
 appendfsync everysec
 save ""
-
-# Keep the alarm stream bounded regardless of consumer lag; workers use
-# consumer groups + XAUTOCLAIM so trimming old entries is safe.
-# (Trimming is done by the producer via XADD MAXLEN ~ 100000.)
 
 tcp-keepalive 60
 timeout 0
