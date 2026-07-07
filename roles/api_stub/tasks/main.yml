@@ -1,0 +1,42 @@
+---
+- name: Install python venv tooling
+  apt:
+    name: [python3-venv, python3-pip]
+    state: present
+    update_cache: true
+
+- name: Create service user
+  user:
+    name: hazshield
+    system: true
+    shell: /usr/sbin/nologin
+    home: /opt/hazshield
+    create_home: true
+
+- name: Create venv + install FastAPI
+  pip:
+    name: [fastapi, "uvicorn[standard]"]
+    virtualenv: /opt/hazshield/venv
+    virtualenv_command: python3 -m venv
+
+- name: Deploy stub app
+  template:
+    src: main.py.j2
+    dest: /opt/hazshield/main.py
+    owner: hazshield
+    mode: "0644"
+  notify: restart api-stub
+
+- name: Deploy systemd unit
+  template:
+    src: hazshield-api.service.j2
+    dest: /etc/systemd/system/hazshield-api.service
+    mode: "0644"
+  notify: restart api-stub
+
+- name: Enable service
+  systemd:
+    name: hazshield-api
+    state: started
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,6 @@
+---
+- name: restart api-stub
+  systemd:
+    name: hazshield-api
+    state: restarted
+    daemon_reload: true

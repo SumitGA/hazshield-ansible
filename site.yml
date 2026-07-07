@@ -1,0 +1,13 @@
+---
+- name: State node | PostgreSQL 16 + TimescaleDB + Redis
+  hosts: state
+  become: true
+  roles:
+    - postgres
+    - redis
+
+- name: Edge node | stub orchestration API
+  hosts: edge
+  become: true
+  roles:
+    - api_stub

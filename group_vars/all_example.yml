@@ -1,0 +1,23 @@
+# ---- change these two before first run, then never commit real secrets ----
+# (For a portfolio repo, graduate to ansible-vault later and mention it
+# in the interview narrative.)
+pg_password: "Change this to a strong password"
+redis_password: "Change this to a strong password"
+
+# ---- topology (matches Terraform fixed IPs) ----
+state_ip: "10.10.0.12"
+edge_ip: "10.10.0.11"
+compute_ip: "10.10.0.13"
+
+# ---- Postgres sizing: tuned for the 6GB state flavor sharing with Redis ----
+# Budget: PG ~3.5GB effective, Redis 768MB + overhead, OS ~1GB headroom.
+pg_version: 16
+pg_shared_buffers: "1536MB"      # ~25% of VM RAM
+pg_effective_cache_size: "3GB"   # what the kernel page cache will plausibly hold
+pg_work_mem: "16MB"              # per-sort; UI aggregate queries are simple
+pg_maintenance_work_mem: "256MB" # compression jobs benefit
+pg_max_wal_size: "2GB"
+pg_max_connections: 60           # rust pool + fastapi pool + workers + psql
+
+# ---- Redis sizing ----
+redis_maxmemory: "768mb"

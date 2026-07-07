@@ -1,0 +1,19 @@
+[Unit]
+Description=HazShield orchestration API (stub)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=hazshield
+Group=hazshield
+WorkingDirectory=/opt/hazshield
+ExecStart=/opt/hazshield/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3s
+MemoryMax=256M
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
