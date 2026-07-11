@@ -1,0 +1,27 @@
+---
+# Layering contract: caddy is INSTALLED by cloud-init at provision time
+# (see terraform cloud-init: runcmd). This role owns everything mutable:
+# the Caddyfile and service state. If the assert fails, the VM was not
+# provisioned by our Terraform — fix that layer, don't install here.
+
+- name: Assert caddy was installed at provision (cloud-init)
+  ansible.builtin.command: caddy version
+  register: caddy_present
+  changed_when: false
+  failed_when: caddy_present.rc != 0
+
+- name: Deploy Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "caddy validate --adapter caddyfile --config %s"
+  notify: reload caddy
+
+- name: Ensure Caddy is enabled and running
+  ansible.builtin.systemd:
+    name: caddy
+    enabled: true
+    state: started

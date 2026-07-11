@@ -11,3 +11,4 @@
   become: true
   roles:
     - api_stub
+    - caddy

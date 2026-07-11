@@ -14,8 +14,17 @@
     mode: "0640"
   notify: restart redis
 
+- name: Enable memory overcommit (required for safe AOF rewrites)
+  ansible.posix.sysctl:
+    name: vm.overcommit_memory
+    value: "1"
+    state: present
+    reload: true
+
 - name: Ensure redis started
   service:
     name: redis-server
     state: started
     enabled: true
+
+

@@ -1,0 +1,9 @@
+---
+# Public hostnames -> local upstreams. TLS is Cloudflare's problem
+# (terminated at the tunnel); Caddy serves plain HTTP behind it.
+caddy_routes:
+  - { domain: "api.sumitgautam.tech",       upstream: "10.10.0.12:8000" }
+  - { domain: "ingest.sumitgautam.tech",    upstream: "127.0.0.1:8020" }
+  - { domain: "app.sumitgautam.tech",       upstream: "127.0.0.1:8080" }
+  - { domain: "stream.sumitgautam.tech",    upstream: "127.0.0.1:8010" }
+  - { domain: "telemetry.sumitgautam.tech", upstream: "127.0.0.1:3000" }

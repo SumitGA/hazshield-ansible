@@ -98,5 +98,6 @@
     - 0001_asset_hierarchy.sql
     - 0002_timeseries.sql
     - 0003_alarms_plans.sql
+    - 0004_grants.sql
   register: mig
   changed_when: "'CREATE' in mig.stdout or 'ALTER' in mig.stdout"

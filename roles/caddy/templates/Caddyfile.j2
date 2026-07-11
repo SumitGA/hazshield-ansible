@@ -1,0 +1,43 @@
+{
+    auto_https off
+    admin off
+}
+
+(cors) {
+    @preflight method OPTIONS
+    header {
+        Access-Control-Allow-Origin "https://app.sumitgautam.tech"
+        Access-Control-Allow-Credentials "true"
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Authorization, Content-Type, traceparent"
+        Vary "Origin"
+        defer
+    }
+    respond @preflight 204
+}
+
+(security_headers) {
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}
+
+# URLS in caddy_routes from defaults/main.yml
+
+{% for r in caddy_routes %}
+http://{{ r.domain }} {
+    reverse_proxy {{ r.upstream }}
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+}
+{% endfor %}
+
+
+
